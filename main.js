@@ -19,7 +19,6 @@ var app = http.createServer(function(request,response){
   //쿼리 스트링 값(파라미터 )
   var _url = request.url;
   var queryData = url.parse(_url, true).query;
-  var title = queryData.id;
   var pathname = url.parse(_url, true).pathname;
 
   /*
@@ -30,10 +29,16 @@ var app = http.createServer(function(request,response){
   */
 
   if(pathname==='/') { //올바른 경로
+    var title = queryData.id;
+
 
     //페이지가 열릴 때마다 직접 파일을 읽어서 로드하고 있으므로,
     //해당 파일 내용이 수정되어도 서버를 껐다 킬 필요가 없음!!(실시간으로 읽어서 띄우기 떄문..)
     fs.readFile(`data/${title}`,'utf8',function(err, description){
+      if(queryData.id === undefined) { //정의되지 않았다는 예약어, 없는 값
+        title = 'Welcome';
+        description = 'Hello, nodejs';
+      }
       var template = `
       <!doctype html>
       <html>
