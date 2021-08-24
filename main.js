@@ -30,39 +30,58 @@ var app = http.createServer(function(request,response){
 
   if(pathname==='/') { //올바른 경로
     var title = queryData.id;
-
+    var description = '';
 
     //페이지가 열릴 때마다 직접 파일을 읽어서 로드하고 있으므로,
     //해당 파일 내용이 수정되어도 서버를 껐다 킬 필요가 없음!!(실시간으로 읽어서 띄우기 떄문..)
-    fs.readFile(`data/${title}`,'utf8',function(err, description){
+    fs.readdir('./data', function(err,filelist){
+
       if(queryData.id === undefined) { //정의되지 않았다는 예약어, 없는 값
         title = 'Welcome';
-        description = 'Hello, nodejs';
+
       }
-      var template = `
-      <!doctype html>
-      <html>
-      <head>
-      <title>WEB1 - ${title}</title>
-      <meta charset="utf-8">
-      </head>
-      <body>
-      <h1><a href="/">WEB</a></h1>
-      <ol>
-      <li><a href="/?id=HTML">HTML</a></li>
-      <li><a href="/?id=CSS">CSS</a></li>
-      <li><a href="/?id=JavaScript">JavaScript</a></li>
-      </ol>
-      <h2>${title}</h2>
-      <p>
-      ${description}
-      </p>
-      </body>
-      </html>
-      `
-      response.writeHead(200); //통신 성공
-      response.end(template);
-    });
+
+            var list = '<ul>';
+            var i=0;
+            while(i < filelist.length) {
+
+              list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+              i++;
+            };
+
+
+            list += '</ul>';
+
+      fs.readFile(`./data/${title}`, 'utf8', function(err, description){
+        var template = `
+        <!doctype html>
+        <html>
+        <head>
+        <title>WEB1 - ${title}</title>
+        <meta charset="utf-8">
+        </head>
+        <body>
+        <h1><a href="/">WEB</a></h1>
+        ${list}
+        <h2>${title}</h2>
+        <p>`;
+        if(queryData.id === undefined) {
+          description = 'Hello, nodejs';
+        }
+         template +=`${description}`;
+
+        template +=
+        `</p>
+        </body>
+        </html>
+        `;
+        response.writeHead(200); //통신 성공
+        response.end(template);
+
+      }); //readdir
+
+
+  });//readFile
 
   } else { //존재하지 않는 경로로 들어온 경우
     response.writeHead(404); //
