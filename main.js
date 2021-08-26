@@ -28,6 +28,36 @@ var app = http.createServer(function(request,response){
   node.js가 해당 괄호의 소스코드로 응답
   */
 
+  function templateHTML(title,list, body){
+    return `
+    <!doctype html>
+    <html>
+    <head>
+    <title>WEB1 - ${title}</title>
+    <meta charset="utf-8">
+    </head>
+    <body>
+    <h1><a href="/">WEB</a></h1>
+    ${list}
+    ${body}
+    </body>
+    </html>
+    `;
+  }
+
+  function templateList(filelist){
+    var list = '<ul>';
+    var i=0;
+    while(i < filelist.length) {
+      list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+      i++;
+    };
+    list += '</ul>';
+
+    return list;
+  }
+
+
   if(pathname==='/') { //올바른 경로
     var title = queryData.id;
     var description = '';
@@ -35,46 +65,15 @@ var app = http.createServer(function(request,response){
     //페이지가 열릴 때마다 직접 파일을 읽어서 로드하고 있으므로,
     //해당 파일 내용이 수정되어도 서버를 껐다 킬 필요가 없음!!(실시간으로 읽어서 띄우기 떄문..)
     fs.readdir('./data', function(err,filelist){
-
-      if(queryData.id === undefined) { //정의되지 않았다는 예약어, 없는 값
-        title = 'Welcome';
-
-      }
-
-            var list = '<ul>';
-            var i=0;
-            while(i < filelist.length) {
-
-              list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-              i++;
-            };
-
-
-            list += '</ul>';
+      var listIdx = templateList(filelist);
 
       fs.readFile(`./data/${title}`, 'utf8', function(err, description){
-        var template = `
-        <!doctype html>
-        <html>
-        <head>
-        <title>WEB1 - ${title}</title>
-        <meta charset="utf-8">
-        </head>
-        <body>
-        <h1><a href="/">WEB</a></h1>
-        ${list}
-        <h2>${title}</h2>
-        <p>`;
-        if(queryData.id === undefined) {
-          description = 'Hello, nodejs';
+        if(title === undefined) {//정의되지 않았다는 예약어, 없는 값
+          title = 'Welcome';
+          description = 'Hello, Node.js';
         }
-         template +=`${description}`;
-
-        template +=
-        `</p>
-        </body>
-        </html>
-        `;
+        var body = `<h2>${title}</h2>${description}`
+        var template = templateHTML(title, listIdx, body)
         response.writeHead(200); //통신 성공
         response.end(template);
 
