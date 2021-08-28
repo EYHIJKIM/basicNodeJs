@@ -20,7 +20,7 @@ var app = http.createServer(function(request,response){
   var _url = request.url;
   var queryData = url.parse(_url, true).query;
   var pathname = url.parse(_url, true).pathname;
-  console.log(pathname);
+  var qs = require('querystring');
   /*
   fs.readFileSync(경로) :
   node.js가 해당 경로의 파일을 읽음
@@ -89,7 +89,7 @@ var app = http.createServer(function(request,response){
     var title = 'WEB - create';
     var body
     = `
-    <form action="http://localhost:3000/process_create" method="post">
+    <form action="http://localhost:3000/create_process" method="post">
       <p><input type="text" name="title" placeholder="title"></p>
       <p><textarea name="description" placeholder="description"></textarea></p>
       <p><input type="submit"></p>
@@ -104,6 +104,38 @@ var app = http.createServer(function(request,response){
 
   }); //readdir
 
+
+} else if(pathname==='/create_process'){
+    var body = '';
+    /*
+        <<POST방식으로 전송된 데이터를 받아오는 방법>>
+      노드에선 한번에 데이터를 처리하지 않고, 조각조각 나눠서 가져옴
+      웹브라우저에 접속이 들어올 때마다 createServer함수가 실행됨(현재 최상위 함수)
+      해당 콜백함수로 들어오는 인자값 request, resposne 를 사용하는 함수()
+
+    */
+    //1. 데이터를 가져올 때 실행되는 콜백함수
+    request.on(`data`, function(data){
+      //1.콜백이 실행될 때마다 body에 해당 data를 더해주라는 로직
+      body += data;
+      if(body.length > 1e6) {//1.1이 데이터가 너무 크다면 연결을 끊어버림
+        request.connection.destory();
+      }
+
+    });
+    //2.데이터를 다 가져온 뒤(request.on이 끝난 뒤)실행되기로 약속되있는 함수\ㅍ
+    request.on('end',function(){
+      var post = qs.parse(body);
+      //보낸 전체 값이 모두 출력됨
+      var title = post.title;
+      var description = post.description;
+      console.log(post);
+      console.log(post.title);
+      console.log(post.description);
+
+    });
+    response.writeHead(200);
+    response.end('Success');
 
 } else { //존재하지 않는 경로로 들어온 경우
     response.writeHead(404); //
