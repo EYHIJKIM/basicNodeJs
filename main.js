@@ -20,7 +20,7 @@ var app = http.createServer(function(request,response){
   var _url = request.url;
   var queryData = url.parse(_url, true).query;
   var pathname = url.parse(_url, true).pathname;
-
+  console.log(pathname);
   /*
   fs.readFileSync(경로) :
   node.js가 해당 경로의 파일을 읽음
@@ -39,6 +39,7 @@ var app = http.createServer(function(request,response){
     <body>
     <h1><a href="/">WEB</a></h1>
     ${list}
+    <a href="/create">create</a>
     ${body}
     </body>
     </html>
@@ -69,9 +70,9 @@ var app = http.createServer(function(request,response){
 
       fs.readFile(`./data/${title}`, 'utf8', function(err, description){
         if(title === undefined) {//정의되지 않았다는 예약어, 없는 값
-          title = 'Welcome';
+          title = 'Welcomed';
           description = 'Hello, Node.js';
-        }
+        };
         var body = `<h2>${title}</h2>${description}`
         var template = templateHTML(title, listIdx, body)
         response.writeHead(200); //통신 성공
@@ -82,7 +83,29 @@ var app = http.createServer(function(request,response){
 
   });//readFile
 
-  } else { //존재하지 않는 경로로 들어온 경우
+} else if(pathname ==='/create'){
+  fs.readdir('./data', function(err,filelist){
+    var listIdx = templateList(filelist);
+    var title = 'WEB - create';
+    var body
+    = `
+    <form action="http://localhost:3000/process_create" method="post">
+      <p><input type="text" name="title" placeholder="title"></p>
+      <p><textarea name="description" placeholder="description"></textarea></p>
+      <p><input type="submit"></p>
+    </form>
+
+    `
+    var template = templateHTML(title, listIdx, body)
+    response.writeHead(200); //통신 성공
+    response.end(template);
+
+
+
+  }); //readdir
+
+
+} else { //존재하지 않는 경로로 들어온 경우
     response.writeHead(404); //
     response.end('Not found');
   }
