@@ -28,7 +28,7 @@ var app = http.createServer(function(request,response){
   node.js가 해당 괄호의 소스코드로 응답
   */
 
-  function templateHTML(title,list, body){
+  function templateHTML(title,list,body,control){
     return `
     <!doctype html>
     <html>
@@ -39,7 +39,7 @@ var app = http.createServer(function(request,response){
     <body>
     <h1><a href="/">WEB</a></h1>
     ${list}
-    <a href="/create">create</a>
+    ${control}
     ${body}
     </body>
     </html>
@@ -67,21 +67,27 @@ var app = http.createServer(function(request,response){
     //해당 파일 내용이 수정되어도 서버를 껐다 킬 필요가 없음!!(실시간으로 읽어서 띄우기 떄문..)
     fs.readdir('./data', function(err,filelist){
       var listIdx = templateList(filelist);
+      var control = '<a href="/create">create</a>&nbsp;&nbsp;';
 
       fs.readFile(`./data/${title}`, 'utf8', function(err, description){
-        if(title === undefined) {//정의되지 않았다는 예약어, 없는 값
-          title = 'Welcomed';
-          description = 'Hello, Node.js';
-        };
-        var body = `<h2>${title}</h2>${description}`
-        var template = templateHTML(title, listIdx, body)
-        response.writeHead(200); //통신 성공
-        response.end(template);
 
-      }); //readdir
+          if(title === undefined) {//정의되지 않았다는 예약어, 없는 값
+            title = 'Welcomed';
+            description = 'Hello, Node.js';
+          } else { //홈이 아닐 때는 update가 보이도록
+            control +=`<a href="/update?id=${title}">update</a>`;
+          }
+
+          var body = `<h2>${title}</h2>${description}`
+
+          var template = templateHTML(title, listIdx, body,control );
+          response.writeHead(200); //통신 성공
+          response.end(template);
+
+      });//readFile
 
 
-  });//readFile
+  });//readdir
 
 } else if(pathname ==='/create'){
   fs.readdir('./data', function(err,filelist){
@@ -89,14 +95,14 @@ var app = http.createServer(function(request,response){
     var title = 'WEB - create';
     var body
     = `
-    <form action="http://localhost:3000/create_process" method="post">
+    <form action="/create_process" method="post">
       <p><input type="text" name="title" placeholder="title"></p>
       <p><textarea name="description" placeholder="description"></textarea></p>
       <p><input type="submit"></p>
     </form>
-
     `
-    var template = templateHTML(title, listIdx, body)
+    var control = '';
+    var template = templateHTML(title, listIdx, body, control);
     response.writeHead(200); //통신 성공
     response.end(template);
 
@@ -123,7 +129,7 @@ var app = http.createServer(function(request,response){
       }
 
     });
-    //2.데이터를 다 가져온 뒤(request.on이 끝난 뒤)실행되기로 약속되있는 함수
+    //2.데이터를 다 가져온 뒤(request.on이 끝난 뒤)실행되기로 약속되있는 함<
     request.on('end',function(){
       var post = qs.parse(body);
       //보낸 전체 값이 모두 출력됨
@@ -133,20 +139,66 @@ var app = http.createServer(function(request,response){
       //파일 생성
       fs.writeFile(`data/${title}`, description,'utf8'
         ,function(err){//콜백 안에 response를
-
           //302는 페이지를 리다이렉션 시키라는 의미임
-          response.writeHead(302, {Location: `/?id=${title}`
-          });
-          response.end('Success');
+          response.writeHead(302, {Location: `/?id=${title}`});
+          response.end();
+        }); //writeFile End
 
+      });//request.on end End
+
+
+//업데이
+} else if(pathname === '/update'){
+      fs.readdir('./data', function(err,filelist){
+        var listIdx = templateList(filelist);
+        var control = '';
+        var title = queryData.id;
+          fs.readFile(`./data/${title}`, 'utf8', function(err, description){
+
+
+              //수정한 문서를 알기 위해 hidden으로 원래 파일이름(title)값을 넣어서 보내준다.
+              var body = `
+              <form action="/update_process" method="post">
+                  <input type="hidden" name="id" value="${title}">
+                  <p><input type="text" name="title" value="${title}"></p>
+                  <p><textarea name="description" value="">${description}</textarea></p>
+                  <p><input type="submit"></p>
+                </form>
+              `
+
+              var template = templateHTML(title, listIdx, body,control );
+              response.writeHead(200); //통신 성공
+              response.end(template);
+
+          });//readFile
+
+      });//readdir
+
+
+} else if (pathname === '/update_process') {
+      var body='';
+      request.on('data', function(data){
+        body += data;
       });
-      // console.log(post);
-      // console.log(post.title);
-      // console.log(post.description);
+      request.on('end', function(){
+        var post = qs.parse(body);
+        var title = post.title;
+        var description = post.description;
+        var id = post.id;
+        /*
+          fs.rename : 파일 이름 변경
+          fs.rename('원래 파일 경로/이름','파일경로/바꿀이름',콜백함수)
+        */
+        fs.rename(`data/${id}`, `data/${title}`,function(err){
+          fs.writeFile(`data/${title}`,description,'utf8',function(err){
+            response.writeHead(302,{Location:`/?id=${title}`});
+            response.end();
+          });//writeFile End
+        });//rename End
 
-    });//request.on('end')
 
 
+      });//request.on End
 
 } else { //존재하지 않는 경로로 들어온 경우
     response.writeHead(404); //
