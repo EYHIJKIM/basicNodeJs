@@ -123,19 +123,30 @@ var app = http.createServer(function(request,response){
       }
 
     });
-    //2.데이터를 다 가져온 뒤(request.on이 끝난 뒤)실행되기로 약속되있는 함수\ㅍ
+    //2.데이터를 다 가져온 뒤(request.on이 끝난 뒤)실행되기로 약속되있는 함수
     request.on('end',function(){
       var post = qs.parse(body);
       //보낸 전체 값이 모두 출력됨
       var title = post.title;
       var description = post.description;
-      console.log(post);
-      console.log(post.title);
-      console.log(post.description);
 
-    });
-    response.writeHead(200);
-    response.end('Success');
+      //파일 생성
+      fs.writeFile(`data/${title}`, description,'utf8'
+        ,function(err){//콜백 안에 response를
+
+          //302는 페이지를 리다이렉션 시키라는 의미임
+          response.writeHead(302, {Location: `/?id=${title}`
+          });
+          response.end('Success');
+
+      });
+      // console.log(post);
+      // console.log(post.title);
+      // console.log(post.description);
+
+    });//request.on('end')
+
+
 
 } else { //존재하지 않는 경로로 들어온 경우
     response.writeHead(404); //
