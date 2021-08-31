@@ -75,7 +75,11 @@ var app = http.createServer(function(request,response){
             title = 'Welcomed';
             description = 'Hello, Node.js';
           } else { //홈이 아닐 때는 update가 보이도록
-            control +=`<a href="/update?id=${title}">update</a>`;
+            control +=`<a href="/update?id=${title}">update</a>&nbsp;&nbsp;`;
+            control +=`<form action="/delete_process" method="post">
+            <input type="hidden" name="id" value="${title}">
+            <input type="submit" value="delete">
+            </form>`;
           }
 
           var body = `<h2>${title}</h2>${description}`
@@ -199,6 +203,26 @@ var app = http.createServer(function(request,response){
 
 
       });//request.on End
+
+} else if(pathname === '/delete_process'){
+      var body = '';
+      request.on('data', function(data){
+          body += data;
+      });
+
+      request.on('end', function(){
+        var post = qs.parse(body);
+        var id = post.id;
+
+        //삭제 펑션
+        fs.unlink(`data/${id}`, function(err){
+            response.writeHead(302,{Location:`/`});
+            response.end();
+        }); //unlink end
+        
+      });//request end End
+
+
 
 } else { //존재하지 않는 경로로 들어온 경우
     response.writeHead(404); //
