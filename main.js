@@ -21,6 +21,7 @@ var app = http.createServer(function(request,response){
   var queryData = url.parse(_url, true).query;
   var pathname = url.parse(_url, true).pathname;
   var qs = require('querystring');
+  var path = require('path');
   /*
   fs.readFileSync(경로) :
   node.js가 해당 경로의 파일을 읽음
@@ -75,11 +76,13 @@ var template = require('./lib/template.js');
     //페이지가 열릴 때마다 직접 파일을 읽어서 로드하고 있으므로,
     //해당 파일 내용이 수정되어도 서버를 껐다 킬 필요가 없음!!(실시간으로 읽어서 띄우기 떄문..)
     fs.readdir('./data', function(err,filelist){
+      //경로 파싱 -> 보안을 위한 것.
+      var filteredId = path.parse(queryData.id).base;
       //var listIdx = templateList(filelist);
       var listIdx = template.list(filelist);
       var control = '<a href="/create">create</a>&nbsp;&nbsp;';
 
-      fs.readFile(`./data/${title}`, 'utf8', function(err, description){
+      fs.readFile(`./data/${filteredId}`, 'utf8', function(err, description){
 
           if(title === undefined) {//정의되지 않았다는 예약어, 없는 값
             title = 'Welcomed';
@@ -223,9 +226,10 @@ var template = require('./lib/template.js');
       request.on('end', function(){
         var post = qs.parse(body);
         var id = post.id;
+        var filteredId = path.parse(id).base;
 
         //삭제 펑션
-        fs.unlink(`data/${id}`, function(err){
+        fs.unlink(`data/${filteredId}`, function(err){
             response.writeHead(302,{Location:`/`});
             response.end();
         }); //unlink end
