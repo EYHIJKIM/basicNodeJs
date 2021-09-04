@@ -28,35 +28,40 @@ var app = http.createServer(function(request,response){
   node.js가 해당 괄호의 소스코드로 응답
   */
 
-  function templateHTML(title,list,body,control){
-    return `
-    <!doctype html>
-    <html>
-    <head>
-    <title>WEB1 - ${title}</title>
-    <meta charset="utf-8">
-    </head>
-    <body>
-    <h1><a href="/">WEB</a></h1>
-    ${list}
-    ${control}
-    ${body}
-    </body>
-    </html>
-    `;
-  }
+//객체에 html 프로퍼티에 함수를 넣는다.
+//refactorying : 내부 코드를 효율적으로 바꾸는 것. 리팩토링은 중요하다..~!
+//처음부터 리팩토링은 어려움. 처음에는 잘 동작하는 동작을 짠 다음에
+//그 이후에 리팩토링을 자주자주 하는 것이 중요함.
+var template = {
+  HTML : function (title,list,body,control){
+            return `
+            <!doctype html>
+            <html>
+            <head>
+            <title>WEB1 - ${title}</title>
+            <meta charset="utf-8">
+            </head>
+            <body>
+            <h1><a href="/">WEB</a></h1>
+            ${list}
+            ${control}
+            ${body}
+            </body>
+            </html>
+            `;
+          },
+    list : function templateList(filelist){
+              var list = '<ul>';
+              var i=0;
+              while(i < filelist.length) {
+                list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+                i++;
+              };
+              list += '</ul>';
 
-  function templateList(filelist){
-    var list = '<ul>';
-    var i=0;
-    while(i < filelist.length) {
-      list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-      i++;
-    };
-    list += '</ul>';
-
-    return list;
-  }
+              return list;
+            }
+};//template end
 
 
   if(pathname==='/') { //올바른 경로
@@ -66,7 +71,8 @@ var app = http.createServer(function(request,response){
     //페이지가 열릴 때마다 직접 파일을 읽어서 로드하고 있으므로,
     //해당 파일 내용이 수정되어도 서버를 껐다 킬 필요가 없음!!(실시간으로 읽어서 띄우기 떄문..)
     fs.readdir('./data', function(err,filelist){
-      var listIdx = templateList(filelist);
+      //var listIdx = templateList(filelist);
+      var listIdx = template.list(filelist);
       var control = '<a href="/create">create</a>&nbsp;&nbsp;';
 
       fs.readFile(`./data/${title}`, 'utf8', function(err, description){
@@ -84,9 +90,9 @@ var app = http.createServer(function(request,response){
 
           var body = `<h2>${title}</h2>${description}`
 
-          var template = templateHTML(title, listIdx, body,control );
+          var html = template.HTML(title, listIdx, body,control );
           response.writeHead(200); //통신 성공
-          response.end(template);
+          response.end(html);
 
       });//readFile
 
@@ -95,7 +101,7 @@ var app = http.createServer(function(request,response){
 
 } else if(pathname ==='/create'){
   fs.readdir('./data', function(err,filelist){
-    var listIdx = templateList(filelist);
+    var listIdx = template.list(filelist);
     var title = 'WEB - create';
     var body
     = `
@@ -106,9 +112,9 @@ var app = http.createServer(function(request,response){
     </form>
     `
     var control = '';
-    var template = templateHTML(title, listIdx, body, control);
+    var html = template.HTML(title, listIdx, body, control);
     response.writeHead(200); //통신 성공
-    response.end(template);
+    response.end(html);
 
 
 
@@ -154,7 +160,7 @@ var app = http.createServer(function(request,response){
 //업데이
 } else if(pathname === '/update'){
       fs.readdir('./data', function(err,filelist){
-        var listIdx = templateList(filelist);
+        var listIdx = template.list(filelist);
         var control = '';
         var title = queryData.id;
           fs.readFile(`./data/${title}`, 'utf8', function(err, description){
@@ -170,9 +176,9 @@ var app = http.createServer(function(request,response){
                 </form>
               `
 
-              var template = templateHTML(title, listIdx, body,control );
+              var html = template.HTML(title, listIdx, body,control );
               response.writeHead(200); //통신 성공
-              response.end(template);
+              response.end(html);
 
           });//readFile
 
@@ -219,7 +225,7 @@ var app = http.createServer(function(request,response){
             response.writeHead(302,{Location:`/`});
             response.end();
         }); //unlink end
-        
+
       });//request end End
 
 
