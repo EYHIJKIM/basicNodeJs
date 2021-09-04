@@ -26,7 +26,7 @@ a[0]();
 var o = {
   func : f
 }
-
+//2.2. f함수가 실행이 됨.
 o.func();
 
 //console.log('f',f);
