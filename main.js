@@ -32,6 +32,8 @@ var app = http.createServer(function(request,response){
 //refactorying : 내부 코드를 효율적으로 바꾸는 것. 리팩토링은 중요하다..~!
 //처음부터 리팩토링은 어려움. 처음에는 잘 동작하는 동작을 짠 다음에
 //그 이후에 리팩토링을 자주자주 하는 것이 중요함.
+/*
+lib폴더로 옮김
 var template = {
   HTML : function (title,list,body,control){
             return `
@@ -62,7 +64,9 @@ var template = {
               return list;
             }
 };//template end
-
+*/
+//모듈화!!!
+var template = require('./lib/template.js');
 
   if(pathname==='/') { //올바른 경로
     var title = queryData.id;
